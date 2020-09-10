@@ -1,6 +1,7 @@
 package com.example.unify;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
@@ -44,7 +45,7 @@ public class Dashboard extends AppCompatActivity {
     private ImageView imageView;
 
     private static final int PICK_IMAGE_REQUEST = 101;
-    private static final int CAMERA_REQUEST=102;
+    private static final int CAMERA_REQUEST=100;
 
     String pathToFile, currentPhotoPath;
     Uri photoURI;
@@ -93,14 +94,13 @@ public class Dashboard extends AppCompatActivity {
                 startActivityForResult(takePic, CAMERA_REQUEST);
             }
             else {
-                //Toast.makeText(getApplicationContext(), "error while accessing the photo taken", Toast.LENGTH_SHORT).show();
-
+                Toast.makeText(getApplicationContext(), "error while accessing the photo taken", Toast.LENGTH_SHORT).show();
             }
         }
     }
 
     private File createPhotoFile() {
-        String name = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+        @SuppressLint("SimpleDateFormat") String name = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
         File storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
         File image=null;
         try {
@@ -135,7 +135,7 @@ public class Dashboard extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if(resultCode == RESULT_OK  && data!=null) {
-            if (requestCode == CAMERA_REQUEST  ) {
+            if (requestCode == CAMERA_REQUEST) {
                 flag=1;
 
                 if(Build.VERSION.SDK_INT > 27) {
@@ -145,7 +145,6 @@ public class Dashboard extends AppCompatActivity {
                         imageView.setImageBitmap(bitmap);
                         imageView.setVisibility(View.VISIBLE);
                         buttonUpload.setVisibility(View.VISIBLE);
-
                     }
                     catch (IOException e) {
                         e.printStackTrace();
