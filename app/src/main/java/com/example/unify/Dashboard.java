@@ -81,15 +81,18 @@ public class Dashboard extends AppCompatActivity {
     //THIS FUNCTION CAPTURES IMAGE FROM DEVICE
     public void captureImage(View view) {
         Intent takePic = new Intent (MediaStore.ACTION_IMAGE_CAPTURE);
-
-        if(takePic.resolveActivity(getPackageManager())!=null) {
+        System.out.println("\n*****In Capture*****");
+        if(takePic.resolveActivity(getPackageManager())!=null)
+        {
             File photoFile = null;
             //OBTAIN IMAGE FILE
             photoFile = createPhotoFile();
-
+            System.out.println("\nphotofile :"+photoFile);
             if (photoFile != null) {
                 pathToFile = photoFile.getAbsolutePath();
+                System.out.println("\npathToFile :"+pathToFile);
                 photoURI = FileProvider.getUriForFile(this, "com.example.unify.fileprovider", photoFile);
+                System.out.println("\nphotoURI :"+photoURI);
                 takePic.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
                 startActivityForResult(takePic, CAMERA_REQUEST);
             }
@@ -105,7 +108,6 @@ public class Dashboard extends AppCompatActivity {
         File image=null;
         try {
             image=File.createTempFile(name,".jpg",storageDir);
-
             currentPhotoPath = image.getAbsolutePath();
             Toast.makeText(getApplicationContext(),"File has been stored as " + name.toString() ,Toast.LENGTH_SHORT).show();
             //pathToFile = image.getAbsolutePath();
@@ -135,11 +137,15 @@ public class Dashboard extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         System.out.println("\n*******In onActivityResult****");
-        if(resultCode == RESULT_OK  && data!=null) {
+        System.out.println(resultCode);
+        System.out.println(data);
+        if(resultCode == RESULT_OK) {
+            System.out.println("\n*******result_ok****");
             if (requestCode == CAMERA_REQUEST) {
+                System.out.println("\n*******camera-request output****");
                 flag=1;
-
                 if(Build.VERSION.SDK_INT > 27) {
+                    System.out.println("\n*******In api>27****");
                     ImageDecoder.Source source = ImageDecoder.createSource(this.getContentResolver(), photoURI);
                     try {
                         bitmap = ImageDecoder.decodeBitmap(source);
@@ -152,6 +158,7 @@ public class Dashboard extends AppCompatActivity {
                     }
                 }
                 else {
+                    System.out.println("\n*******In api<=27****");
                     try {
                         Bitmap bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), photoURI);
                         imageView.setImageBitmap(bitmap);
@@ -229,6 +236,7 @@ public class Dashboard extends AppCompatActivity {
         call.enqueue(new Callback<ResponseBody>() {
             @Override
             public void onResponse(Call<ResponseBody> call, Response <ResponseBody> response) {
+                System.out.println("\nResponse:"+response);
                 //WHEN RESPONSE IS RECEIVED FROM SERVER
                 try {
                     //CONVERT JSON RESPONSE TO STRING
