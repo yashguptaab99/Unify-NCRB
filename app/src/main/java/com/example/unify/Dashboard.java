@@ -74,6 +74,7 @@ public class Dashboard extends AppCompatActivity {
         Intent i = new Intent(
                 Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
         startActivityForResult(i, PICK_IMAGE_REQUEST);
+        System.out.println("\n*******In select image****");
 
     }
 
@@ -90,7 +91,6 @@ public class Dashboard extends AppCompatActivity {
                 pathToFile = photoFile.getAbsolutePath();
                 photoURI = FileProvider.getUriForFile(this, "com.example.unify.fileprovider", photoFile);
                 takePic.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
-
                 startActivityForResult(takePic, CAMERA_REQUEST);
             }
             else {
@@ -116,7 +116,7 @@ public class Dashboard extends AppCompatActivity {
         return image;
     }
 
-    public String getPath(Uri uri) {
+    /*public String getPath(Uri uri) {      not working
         Cursor cursor = getContentResolver().query(uri, null, null, null, null);
         cursor.moveToFirst();
         String document_id = cursor.getString(0);
@@ -129,11 +129,12 @@ public class Dashboard extends AppCompatActivity {
         String path = cursor.getString(cursor.getColumnIndex(MediaStore.Images.Media.DATA));
         cursor.close();
         return path;
-    }
+    }*/
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+        System.out.println("\n*******In onActivityResult****");
         if(resultCode == RESULT_OK  && data!=null) {
             if (requestCode == CAMERA_REQUEST) {
                 flag=1;
@@ -163,9 +164,25 @@ public class Dashboard extends AppCompatActivity {
                 }
             }
             else if (requestCode == PICK_IMAGE_REQUEST  && data!=null ) {
-                    Uri path = data.getData();
-                    pathToFile = getPath(path);
+                System.out.println("\n*******In picK-image output****");
+                Uri path = data.getData();
+                System.out.println(path);
+                String[] filePathColumn = {MediaStore.Images.Media.DATA};
+                if (path != null)
+                {
+                    Cursor cursor = getContentResolver().query(path, filePathColumn, null, null, null);
+                    if (cursor != null)
+                    {
+                        cursor.moveToFirst();
+                        int columnIndex = cursor.getColumnIndex(filePathColumn[0]);
+                        pathToFile = cursor.getString(columnIndex);
+                    }
+                }
+
+                        //pathToFile = getPath(path); not working
+                        System.out.println("pathtofile:"+pathToFile);
                     if(Build.VERSION.SDK_INT > 27) {
+                        System.out.println("\n*******In api>27****");
                         ImageDecoder.Source source = ImageDecoder.createSource(this.getContentResolver(), path);
                         try {
                             bitmap = ImageDecoder.decodeBitmap(source);
@@ -177,6 +194,7 @@ public class Dashboard extends AppCompatActivity {
                         }
                     }
                     else {
+                        System.out.println("\n*******In api<=27****");
                         try {
                             Bitmap bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), path);
                             imageView.setImageBitmap(bitmap);
