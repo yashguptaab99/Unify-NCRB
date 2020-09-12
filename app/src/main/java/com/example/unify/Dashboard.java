@@ -240,6 +240,7 @@ public class Dashboard extends AppCompatActivity {
                 //WHEN RESPONSE IS RECEIVED FROM SERVER
                 try {
                     //CONVERT JSON RESPONSE TO STRING
+                    System.out.println("\nResponse:"+response.body().string());
                     String s = response.body().string();
 
                     Intent i = new Intent(Dashboard.this, BestMatches.class);
