@@ -242,10 +242,15 @@ public class Dashboard extends AppCompatActivity {
                     //CONVERT JSON RESPONSE TO STRING
                     //System.out.println("\nResponse:"+response.body().string());
                     String s = response.body().string();
-                    System.out.println("Response String :: "+s);
-                    Intent i = new Intent(Dashboard.this, BestMatches.class);
-                    i.putExtra("matches", s);
-                    startActivity(i);
+                    if(s.contains("face_status")){
+                        Toast.makeText(getApplicationContext(), "No face or multiple faces detected !", Toast.LENGTH_SHORT).show();
+                    }
+                    else {
+                        System.out.println("Response String :: " + s);
+                        Intent i = new Intent(Dashboard.this, BestMatches.class);
+                        i.putExtra("matches", s);
+                        startActivity(i);
+                    }
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
