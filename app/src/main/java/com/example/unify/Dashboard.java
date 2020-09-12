@@ -254,6 +254,7 @@ public class Dashboard extends AppCompatActivity {
             @Override
             public void onFailure(Call<ResponseBody> call, Throwable t) {
                 //IF RESPONSE IS NOT RECIEVED FROM SERVER
+                System.out.println("\nResponse:"+t);
                 Toast.makeText(Dashboard.this, "Could not Connect to Server!", Toast.LENGTH_SHORT).show();
             }
         });
