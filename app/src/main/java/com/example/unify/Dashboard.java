@@ -2,6 +2,7 @@ package com.example.unify;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
@@ -17,6 +18,7 @@ import android.widget.ImageView;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.FileProvider;
 
@@ -216,6 +218,23 @@ public class Dashboard extends AppCompatActivity {
         }
     }
 
+
+    private void alertDialog() {
+        AlertDialog.Builder dialog=new AlertDialog.Builder(this);
+        dialog.setMessage("No face or multiple faces detected!!");
+        dialog.setTitle("Alert!");
+        dialog.setPositiveButton("Okay",
+                new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog,
+                                        int which) {
+                        Toast.makeText(getApplicationContext(),"Try Again",Toast.LENGTH_LONG).show();
+                    }
+                });
+        AlertDialog alertDialog = dialog.create();
+        alertDialog.show();
+    }
+
+
     //THIS FUNCTION UPLOADS IMAGE TO THE SERVER
     public void uploadImage(View view) {
         File file=new File(pathToFile);
@@ -243,7 +262,8 @@ public class Dashboard extends AppCompatActivity {
                     //System.out.println("\nResponse:"+response.body().string());
                     String s = response.body().string();
                     if(s.contains("face_status")){
-                        Toast.makeText(getApplicationContext(), "No face or multiple faces detected !", Toast.LENGTH_SHORT).show();
+                        //Toast.makeText(getApplicationContext(), "No face or multiple faces detected !", Toast.LENGTH_SHORT).show();
+                        alertDialog();
                     }
                     else {
                         System.out.println("Response String :: " + s);
@@ -254,9 +274,7 @@ public class Dashboard extends AppCompatActivity {
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
-
             }
-
             @Override
             public void onFailure(Call<ResponseBody> call, Throwable t) {
                 //IF RESPONSE IS NOT RECIEVED FROM SERVER
