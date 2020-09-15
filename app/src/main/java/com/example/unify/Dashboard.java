@@ -6,17 +6,20 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.ImageDecoder;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
+import android.util.Size;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -25,7 +28,10 @@ import androidx.core.content.FileProvider;
 import com.example.unify.api.Api;
 import com.example.unify.api.RetrofitClient;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -141,6 +147,7 @@ public class Dashboard extends AppCompatActivity {
         System.out.println("\n*******In onActivityResult****");
         System.out.println(resultCode);
         System.out.println(data);
+
         if(resultCode == RESULT_OK) {
             System.out.println("\n*******result_ok****");
             if (requestCode == CAMERA_REQUEST) {
@@ -148,12 +155,30 @@ public class Dashboard extends AppCompatActivity {
                 flag=1;
                 if(Build.VERSION.SDK_INT > 27) {
                     System.out.println("\n*******In api>27****");
+                    ImageDecoder.OnHeaderDecodedListener listener = new ImageDecoder.OnHeaderDecodedListener() {
+                        @Override
+                        public void onHeaderDecoded(@NonNull ImageDecoder decoder, @NonNull ImageDecoder.ImageInfo info, @NonNull ImageDecoder.Source source) {
+                            int imgHeight = info.getSize().getHeight();
+                            int imgWidth = info.getSize().getWidth();
+                            int targetSampleSize = 1;
+                            int reqHeight=600, reqWidth=600;
+                            if (imgHeight > reqHeight || imgWidth > reqWidth) {
+                                int halfHeight = imgHeight / 2;
+                                int halfWidth = imgWidth / 2;
+                                while ((halfHeight / targetSampleSize) >= reqHeight && (halfWidth / targetSampleSize) >= reqWidth) {
+                                    targetSampleSize *= 2;
+                                }
+                            }
+                            decoder.setTargetSampleSize(targetSampleSize*2);
+                        }
+                    };
                     ImageDecoder.Source source = ImageDecoder.createSource(this.getContentResolver(), photoURI);
                     try {
-                        bitmap = ImageDecoder.decodeBitmap(source);
+                        bitmap = ImageDecoder.decodeBitmap(source,listener);
                         imageView.setImageBitmap(bitmap);
                         imageView.setVisibility(View.VISIBLE);
                         buttonUpload.setVisibility(View.VISIBLE);
+                        pathToFile = getBitmapFile(bitmap);
                     }
                     catch (IOException e) {
                         e.printStackTrace();
@@ -175,7 +200,7 @@ public class Dashboard extends AppCompatActivity {
             else if (requestCode == PICK_IMAGE_REQUEST  && data!=null ) {
                 System.out.println("\n*******In picK-image output****");
                 Uri path = data.getData();
-                System.out.println(path);
+                System.out.println("***Path :: "+path);
                 String[] filePathColumn = {MediaStore.Images.Media.DATA};
                 if (path != null)
                 {
@@ -187,33 +212,57 @@ public class Dashboard extends AppCompatActivity {
                         pathToFile = cursor.getString(columnIndex);
                     }
                 }
-
-                        //pathToFile = getPath(path); not working
-                        System.out.println("pathtofile:"+pathToFile);
-                    if(Build.VERSION.SDK_INT > 27) {
-                        System.out.println("\n*******In api>27****");
-                        ImageDecoder.Source source = ImageDecoder.createSource(this.getContentResolver(), path);
-                        try {
-                            bitmap = ImageDecoder.decodeBitmap(source);
-                            imageView.setImageBitmap(bitmap);
-                            imageView.setVisibility(View.VISIBLE);
-                            buttonUpload.setVisibility(View.VISIBLE);
-                        } catch (IOException e) {
-                            e.printStackTrace();
+                //pathToFile = getPath(path); not working
+                System.out.println("***Pathtofile :: "+pathToFile);
+                if(Build.VERSION.SDK_INT > 27) {
+                    System.out.println("\n*******In api>27****");
+                    ImageDecoder.OnHeaderDecodedListener listener = new ImageDecoder.OnHeaderDecodedListener() {
+                        @Override
+                        public void onHeaderDecoded(@NonNull ImageDecoder decoder, @NonNull ImageDecoder.ImageInfo info, @NonNull ImageDecoder.Source source) {
+                            int imgHeight = info.getSize().getHeight();
+                            int imgWidth = info.getSize().getWidth();
+                            int targetSampleSize = 1;
+                            int reqHeight=600, reqWidth=600;
+                            if (imgHeight > reqHeight || imgWidth > reqWidth) {
+                                int halfHeight = imgHeight / 2;
+                                int halfWidth = imgWidth / 2;
+                                while ((halfHeight / targetSampleSize) >= reqHeight && (halfWidth / targetSampleSize) >= reqWidth) {
+                                    targetSampleSize *= 2;
+                                }
+                            }
+                            decoder.setTargetSampleSize(targetSampleSize*2);
                         }
+                    };
+                    ImageDecoder.Source source = ImageDecoder.createSource(this.getContentResolver(), path);
+                    System.out.println("*** After Image Decoder ***");
+                    try {
+                        bitmap = ImageDecoder.decodeBitmap(source,listener);
+                        System.out.println("*** After Image Decoder === Bitmap ***"+bitmap.getByteCount());
+                        imageView.setImageBitmap(bitmap);
+                        System.out.println("*** After Image Decoder === Bitmap === imageView ***"+bitmap.getByteCount());
+                        imageView.setVisibility(View.VISIBLE);
+                        System.out.println("*** After Image Decoder === Bitmap === imageView === setVisible ***");
+                        buttonUpload.setVisibility(View.VISIBLE);
+                        System.out.println("*** After Image Decoder === Bitmap === imageView === setVisible === buttonVisible ***");
+                        pathToFile = getBitmapFile(bitmap);
+                        System.out.println("*** Path to File :: " + pathToFile);
+                    } catch (IOException e) {
+                        System.out.println("\n ===== EXCEPTION OCCURRED ====== \n\n");
+                        e.printStackTrace();
                     }
-                    else {
-                        System.out.println("\n*******In api<=27****");
-                        try {
-                            Bitmap bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), path);
-                            imageView.setImageBitmap(bitmap);
-                            imageView.setVisibility(View.VISIBLE);
-                            buttonUpload.setVisibility(View.VISIBLE);
-                        }
-                        catch (IOException e) {
-                            e.printStackTrace();
-                        }
+                }
+                else {
+                    System.out.println("\n*******In api<=27****");
+                    try {
+                        Bitmap bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), path);
+                        imageView.setImageBitmap(bitmap);
+                        imageView.setVisibility(View.VISIBLE);
+                        buttonUpload.setVisibility(View.VISIBLE);
                     }
+                    catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
             }
         }
     }
@@ -283,4 +332,24 @@ public class Dashboard extends AppCompatActivity {
             }
         });
     }
+
+    private String getBitmapFile(Bitmap reducedBitmap){
+        File BitmapFile = createPhotoFile();
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        String filePath = new String();
+        reducedBitmap.compress(Bitmap.CompressFormat.JPEG, 100, bos);
+        byte[] bitmapData = bos.toByteArray();
+        try {
+            FileOutputStream fos = new FileOutputStream(BitmapFile);
+            fos.write(bitmapData);
+            fos.flush();
+            fos.close();
+            filePath = BitmapFile.getPath();
+            return filePath;
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println("***!!! Exception 22 ****");
+        }
+        return(filePath);
+    };
 }
