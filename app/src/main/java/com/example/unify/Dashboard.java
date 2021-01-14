@@ -8,6 +8,8 @@ import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.ImageDecoder;
+import android.graphics.Matrix;
+import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -187,12 +189,26 @@ public class Dashboard extends AppCompatActivity {
                 else {
                     System.out.println("\n*******In api<=27****");
                     try {
-                        Bitmap bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), photoURI);
+                        /* Bitmap bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), photoURI);
+                        imageView.setImageBitmap(bitmap);
+                        imageView.setVisibility(View.VISIBLE);
+                        buttonUpload.setVisibility(View.VISIBLE); */
+                        //Bitmap bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), photoURI);
+                        BitmapFactory.Options options = new BitmapFactory.Options();
+                        options.inJustDecodeBounds = true;
+                        Bitmap bitmap = BitmapFactory.decodeFile(pathToFile,options);
+                        int scaleFactor = Math.min(options.outWidth/600, options.outHeight/600);;
+                        options.inSampleSize = scaleFactor;
+                        options.inPurgeable = true;
+                        options.inJustDecodeBounds = false;
+                        bitmap = BitmapFactory.decodeFile(pathToFile,options);
+                        bitmap = orientBitmap(bitmap,pathToFile);
                         imageView.setImageBitmap(bitmap);
                         imageView.setVisibility(View.VISIBLE);
                         buttonUpload.setVisibility(View.VISIBLE);
+                        pathToFile = getBitmapFile(bitmap);
                     }
-                    catch (IOException e) {
+                    catch (Exception e) {
                         e.printStackTrace();
                     }
                 }
@@ -254,12 +270,28 @@ public class Dashboard extends AppCompatActivity {
                 else {
                     System.out.println("\n*******In api<=27****");
                     try {
-                        Bitmap bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), path);
+                        /* Bitmap bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), path);
+                        imageView.setImageBitmap(bitmap);
+                        imageView.setVisibility(View.VISIBLE);
+                        buttonUpload.setVisibility(View.VISIBLE); */
+                        //Bitmap bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), path);
+                        BitmapFactory.Options options = new BitmapFactory.Options();
+                        options.inJustDecodeBounds = true;
+                        Bitmap bitmap = BitmapFactory.decodeFile(pathToFile,options);
+                        int scaleFactor = Math.min(options.outWidth/600, options.outHeight/600);
+                        options.inJustDecodeBounds = false;
+                        options.inSampleSize = scaleFactor;
+                        options.inPurgeable = true;
+                        bitmap = BitmapFactory.decodeFile(pathToFile,options);
+                        bitmap = orientBitmap(bitmap,pathToFile);
+                        // Put bitmap into ImageView and change visibility of Upload button
                         imageView.setImageBitmap(bitmap);
                         imageView.setVisibility(View.VISIBLE);
                         buttonUpload.setVisibility(View.VISIBLE);
+                        // Save bitmap to a .jpeg file and get it's path
+                        pathToFile = getBitmapFile(bitmap);
                     }
-                    catch (IOException e) {
+                    catch (Exception e) {
                         e.printStackTrace();
                     }
                 }
@@ -352,4 +384,26 @@ public class Dashboard extends AppCompatActivity {
         }
         return(filePath);
     };
+
+    private Bitmap orientBitmap(Bitmap bitmap, String path){
+        try {
+            ExifInterface exif = new ExifInterface(path);
+            int orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION,1);
+            System.out.println("EXIF :: "+orientation);
+            Matrix matrix = new Matrix();
+            if(orientation == ExifInterface.ORIENTATION_ROTATE_90){
+                matrix.postRotate(90);
+            }
+            else if(orientation == ExifInterface.ORIENTATION_ROTATE_180){
+                matrix.postRotate(180);
+            }
+            else if(orientation == ExifInterface.ORIENTATION_ROTATE_270){
+                matrix.postRotate(270);
+            }
+            bitmap = Bitmap.createBitmap(bitmap,0,0,bitmap.getWidth(),bitmap.getHeight(),matrix,true);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        return (bitmap);
+    }
 }
